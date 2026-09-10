@@ -1,0 +1,22 @@
+{
+  "name": "@internal/workbench-elements",
+  "version": "0.0.0",
+  "description": "PWA 家族 UI 原子（popup-menu / anchored-popup / notice / icon）：WeebPaint src/ui 的 WET 拷贝，签名 pin 在 WeebPaint api/src/ui/*.d.ts；CSS 进包、token 由宿主 :root 提供",
+  "type": "module",
+  "license": "MIT",
+  "files": ["dist", "src", "README.md"],
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./workbench-elements.css": "./src/workbench-elements.css"
+  },
+  "scripts": {
+    "build": "bash scripts/build.sh",
+    "test": "node test/run.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "release": "bash scripts/release.sh"
+  },
+  "devDependencies": {
+    "@microsoft/api-extractor": "^7.58.12",
+    "typescript": "5.7.3"
+  }
+}
