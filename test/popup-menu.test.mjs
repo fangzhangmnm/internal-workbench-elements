@@ -22,8 +22,9 @@ const node = (over = {}) => {
 };
 const { openAdoptedPopup, isPopupOpen } = await import("../src/index.ts");
 
-test("[popup-menu] 菜单外滚动 → 关（菜单是 fixed 的，锚一滚就漂在半空）；菜单内滚动 → 不关；外点 → 关", async () => {
-  const anchor = node({ getBoundingClientRect: () => ({ top: 100, left: 300, right: 340, bottom: 130, width: 40, height: 30 }) });
+test("[popup-menu] 菜单外滚动且锚移了位 → 关；锚没动的 scroll（iOS tap 的幽灵滚动）→ 不关；菜单内滚动 → 不关；外点 → 关", async () => {
+  let aTop = 100;
+  const anchor = node({ getBoundingClientRect: () => ({ top: aTop, left: 300, right: 340, bottom: aTop + 30, width: 40, height: 30 }) });
   const menu = node(); const inner = menu.adopt(node()); const elsewhere = node();
   let closed = 0;
   const h = openAdoptedPopup(menu, { anchor, band: "css", onClose: () => closed++ });
@@ -32,7 +33,10 @@ test("[popup-menu] 菜单外滚动 → 关（菜单是 fixed 的，锚一滚就�
   dispatch("document", "scroll", { target: inner });
   assert(h.isOpen, "菜单内部滚动不关");
   dispatch("document", "scroll", { target: elsewhere });
-  assert(!h.isOpen && menu.classList.contains("hidden") && closed === 1, "菜单外滚动 → 关 + hidden + onClose");
+  assert(h.isOpen, "锚没动的 scroll 事件不关（iOS tap 的幽灵滚动）");
+  aTop = 60;   // 网格真的滚了：锚上移 40
+  dispatch("document", "scroll", { target: elsewhere });
+  assert(!h.isOpen && menu.classList.contains("hidden") && closed === 1, "锚移了位 → 关 + hidden + onClose");
   eq(listeners.get("document:scroll")?.size ?? 0, 0, "关了之后 scroll 监听摘掉");
   const h2 = openAdoptedPopup(menu, { anchor, band: "css", onClose: () => closed++ });
   await tick();

@@ -16,7 +16,8 @@
 //
 // 关闭纪律（内建）：点外面关（capture 相，可选吞掉那一击）、Escape 关最上层、**栈**（开新的会关掉所有
 //   「不包含新锚」的旧菜单——主菜单里再弹主题下拉，主菜单留着；点别处两层一起关）、视口 resize 重定位、
-//   **菜单外的任何滚动 = 关**（0.1.1，2026-09-30：菜单是 fixed 的，锚在滚动容器里一滚菜单就漂在半空；菜单自己内部的滚动不算）、
+//   **菜单外的滚动让锚移了位 = 关**（0.1.1 加、0.1.2 收紧，2026-09-30：菜单是 fixed 的，锚在滚动容器里一滚菜单就漂在半空；
+//   菜单自己内部的滚动不算；锚没动的 scroll 事件也不算——iOS 上 tap 会伴随幽灵 scroll，若见 scroll 就关，菜单项的 click 还没到就被收掉）、
 //   锚按钮再点一下 = toggle。shadow DOM 友好：外点判定用 composedPath（锚可以在 shadow 里，如参考窗的 ＋）。
 //
 // 形态：list（.menu-item 行，带前缀图标，与汉堡菜单同款）/ compact（药丸行，主题/语言下拉旧观感）。
@@ -205,11 +206,18 @@ function _mount(el: HTMLElement, opts: PopupAnchorOpts, hooks: MountHooks): Popu
     }
   };
   const onResize = () => { if (open) position(); };
-  const onScroll = (e: Event) => { const t = e.target as Node | null; if (open && !(t && el.contains(t))) handle.close(); };   // 菜单外滚动 = 关（菜单内部滚自己的项不算；scroll 的 target 只会是 document 或元素）
+  let anchorAt = anchorPos();
+  function anchorPos(): { x: number; y: number } { const r = opts.anchor.getBoundingClientRect(); return { x: r.left, y: r.top }; }
+  const onScroll = (e: Event) => {   // 菜单外滚动且锚真的移了位 = 关（菜单内部滚自己的项不算；锚没动的 scroll 事件不算——iOS tap 的幽灵 scroll）
+    if (!open) return;
+    const t = e.target as Node | null; if (t && el.contains(t)) return;
+    const now = anchorPos(); if (Math.abs(now.x - anchorAt.x) < 0.5 && Math.abs(now.y - anchorAt.y) < 0.5) return;
+    handle.close();
+  };
   const handle: PopupMenuHandle = {
     get isOpen() { return open; },
     el, anchor: opts.anchor,
-    refresh() { if (!open) return; hooks.onRefresh?.(); position(); },
+    refresh() { if (!open) return; hooks.onRefresh?.(); position(); anchorAt = anchorPos(); },
     close() {
       if (!open) return;
       open = false;
