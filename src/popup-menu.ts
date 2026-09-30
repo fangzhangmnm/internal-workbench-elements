@@ -16,6 +16,7 @@
 //
 // 关闭纪律（内建）：点外面关（capture 相，可选吞掉那一击）、Escape 关最上层、**栈**（开新的会关掉所有
 //   「不包含新锚」的旧菜单——主菜单里再弹主题下拉，主菜单留着；点别处两层一起关）、视口 resize 重定位、
+//   **菜单外的任何滚动 = 关**（0.1.1，2026-09-30：菜单是 fixed 的，锚在滚动容器里一滚菜单就漂在半空；菜单自己内部的滚动不算）、
 //   锚按钮再点一下 = toggle。shadow DOM 友好：外点判定用 composedPath（锚可以在 shadow 里，如参考窗的 ＋）。
 //
 // 形态：list（.menu-item 行，带前缀图标，与汉堡菜单同款）/ compact（药丸行，主题/语言下拉旧观感）。
@@ -204,6 +205,7 @@ function _mount(el: HTMLElement, opts: PopupAnchorOpts, hooks: MountHooks): Popu
     }
   };
   const onResize = () => { if (open) position(); };
+  const onScroll = (e: Event) => { const t = e.target as Node | null; if (open && !(t && el.contains(t))) handle.close(); };   // 菜单外滚动 = 关（菜单内部滚自己的项不算；scroll 的 target 只会是 document 或元素）
   const handle: PopupMenuHandle = {
     get isOpen() { return open; },
     el, anchor: opts.anchor,
@@ -213,6 +215,7 @@ function _mount(el: HTMLElement, opts: PopupAnchorOpts, hooks: MountHooks): Popu
       open = false;
       document.removeEventListener("pointerdown", onDocPointerDown, true);
       document.removeEventListener("keydown", onKey, true);
+      document.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", onResize);
       const i = _open.indexOf(handle);
       if (i >= 0) _open.splice(i, 1);
@@ -226,6 +229,7 @@ function _mount(el: HTMLElement, opts: PopupAnchorOpts, hooks: MountHooks): Popu
     if (!open) return;
     document.addEventListener("pointerdown", onDocPointerDown, true);
     document.addEventListener("keydown", onKey, true);
+    document.addEventListener("scroll", onScroll, true);
     window.addEventListener("resize", onResize);
   }, 0);
   _open.push(handle);

@@ -2,4 +2,5 @@
 import { run } from "./runner.mjs";
 import "./anchored-popup.test.mjs";
 import "./icon.test.mjs";
+import "./popup-menu.test.mjs";
 run();

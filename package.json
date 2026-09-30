@@ -1,6 +1,6 @@
 {
   "name": "@internal/workbench-elements",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "PWA 家族 UI 原子（popup-menu / anchored-popup / notice / icon）：WeebPaint src/ui 的 WET 拷贝，签名 pin 在 WeebPaint api/src/ui/*.d.ts；CSS 进包、token 由宿主 :root 提供",
   "type": "module",
   "license": "MIT",
