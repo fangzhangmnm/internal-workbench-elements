@@ -190,6 +190,9 @@ function _mount(el: HTMLElement, opts: PopupAnchorOpts, hooks: MountHooks): Popu
   const onDocPointerDown = (e: PointerEvent) => {
     const path = e.composedPath();
     if (path.includes(el) || path.includes(opts.anchor)) return;
+    // 落在**子弹层**（锚在本弹层里的 popup，如弹层内 select-field 的下拉）上的那一击不算外面——父留着
+    //   （WeebPaint 2026-09-11：图层调整弹层里选混合模式不许把弹层关掉；0.1.3 自 WeebPaint src/ui/popup-menu.ts 原样搬进来，道 2 2026-10-21 交接）
+    if (_open.some((h) => h !== handle && el.contains(h.anchor) && path.includes(h.el))) return;
     handle.close();
     if (opts.swallowOutsideTap) { e.stopPropagation(); e.preventDefault(); }
   };

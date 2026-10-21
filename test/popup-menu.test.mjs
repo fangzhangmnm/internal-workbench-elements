@@ -43,3 +43,23 @@ test("[popup-menu] 菜单外滚动且锚移了位 → 关；锚没动的 scroll�
   dispatch("document", "pointerdown", { composedPath: () => [elsewhere, globalThis.document.body], stopPropagation() {}, preventDefault() {} });
   assert(!h2.isOpen && closed === 2, "外点 → 关");
 });
+
+// 0.1.3（WeebPaint 2026-09-11「子弹层不算外面」；道 2 2026-10-21 交接）：父弹层里锚着一个子 popup（弹层内 select-field 的下拉），
+//   点子 popup 那一击对父弹层不算外面——父留着；点真正的外面照样关。
+test("[popup-menu] 点锚在父弹层里的子 popup → 父不关；点外面 → 父子都关", async () => {
+  const anchor = node();
+  const parent = node();
+  const childAnchor = parent.adopt(node());     // 子 popup 的锚在父弹层里（select-field）
+  const child = node();
+  const elsewhere = node();
+  let parentClosed = 0, childClosed = 0;
+  const hp = openAdoptedPopup(parent, { anchor, band: "css", onClose: () => parentClosed++ });
+  await tick();
+  const hc = openAdoptedPopup(child, { anchor: childAnchor, band: "css", onClose: () => childClosed++ });
+  await tick();
+  dispatch("document", "pointerdown", { composedPath: () => [child, globalThis.document.body], stopPropagation() {}, preventDefault() {} });
+  assert(hp.isOpen && parentClosed === 0, "★点子 popup：父弹层留着（以前这一击被当成外面、父关掉）");
+  assert(hc.isOpen, "子 popup 自己也留着（点的就是它）");
+  dispatch("document", "pointerdown", { composedPath: () => [elsewhere, globalThis.document.body], stopPropagation() {}, preventDefault() {} });
+  assert(!hp.isOpen && !hc.isOpen && parentClosed === 1 && childClosed === 1, "点真正的外面：父子都关");
+});
