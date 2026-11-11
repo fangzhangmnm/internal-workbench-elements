@@ -15,7 +15,7 @@ export {
   type NoticeLevel, type NoticeAction, type NoticeOpts, type NoticeHandle,
 } from "./notice.ts";
 export {
-  configureFloatWindows, registerFloatingWindow, floatingTopFloor, computeTopFloor, clampAllFloatingWindows,
+  configureFloatingWindows, registerFloatingWindow, floatingTopFloor, computeTopFloor, clampAllFloatingWindows,
   raiseFloatingWindow, suppressFloatingForTransient, restoreFloatingAfterTransient, floatingWindowStack,
-  type FloatWindowsConfig, type FloatingWindowSpec, type FloatingWindowHandle, type FloatShell, type PanelPos,
+  type FloatingWindowsConfig, type FloatingWindowSpec, type FloatingWindowHandle, type FloatingWindowShell, type PanelPos,
 } from "./float-window.ts";

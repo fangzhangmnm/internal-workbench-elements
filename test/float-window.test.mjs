@@ -32,7 +32,7 @@ function node(tag = "div", init = {}) {
 }
 
 const {
-  registerFloatingWindow, configureFloatWindows, floatingTopFloor, computeTopFloor, raiseFloatingWindow,
+  registerFloatingWindow, configureFloatingWindows, floatingTopFloor, computeTopFloor, raiseFloatingWindow,
   suppressFloatingForTransient, restoreFloatingAfterTransient, floatingWindowStack,
 } = await import("../src/index.ts");
 const { isKnobDrag, SHELL_KNOB_DRAG_PX, SHELL_IDLE_MS } = await import("../src/float-window.ts");
@@ -44,7 +44,7 @@ async function withEnv(opts, fn) {
   doc.createElement = (tag) => node(tag);
   if (opts.fakeTimers) { globalThis.setTimeout = (f, ms) => { const id = ++seq; timers.set(id, { f, ms }); return id; }; globalThis.clearTimeout = (id) => { timers.delete(id); }; }
   if (opts.hover !== undefined) globalThis.matchMedia = () => ({ matches: opts.hover });
-  configureFloatWindows({ hudBottom: () => null });   // 顶地板 = 安全区 20 + 死区 24 = 44（不受别的测试配的 floors 影响）
+  configureFloatingWindows({ hudBottom: () => null });   // 顶地板 = 安全区 20 + 死区 24 = 44（不受别的测试配的 floors 影响）
   const fire = () => { const all = [...timers.values()]; timers.clear(); for (const t of all) t.f(); return all.map((t) => t.ms); };
   try { await fn({ fire, timers }); }
   finally { doc.createElement = oldCreate; globalThis.setTimeout = oldST; globalThis.clearTimeout = oldCT; if (oldMM === undefined) delete globalThis.matchMedia; else globalThis.matchMedia = oldMM; }
@@ -53,7 +53,7 @@ async function withEnv(opts, fn) {
 test("[float-window] 顶地板 = max(安全区 + 24, 顶排下缘 + 4)；宿主给的顶排下缘生效", () => withEnv({}, () => {
   eq(computeTopFloor(20, null), 44); eq(computeTopFloor(20, 100), 104); eq(computeTopFloor(0, 10), 24);
   eq(floatingTopFloor(), 44, "顶排不可见");
-  configureFloatWindows({ hudBottom: () => 90 }); eq(floatingTopFloor(), 94, "宿主的顶排下缘 90 + 4");
+  configureFloatingWindows({ hudBottom: () => 90 }); eq(floatingTopFloor(), 94, "宿主的顶排下缘 90 + 4");
 }));
 
 test("[float-window] 不开壳 = 老样子：开窗钳进视口（拖把不进顶地板）、hidden 属性显隐、回声、没有壳的类和零件", () => withEnv({}, () => {
@@ -91,14 +91,14 @@ test("[float-window] 能改大小的窗比能用的地方还大 = 先缩到放�
 }));
 
 test("[float-window] 显隐用类名（画画仓 = hidden 类）：开关只动类，不碰 hidden 属性", () => withEnv({}, () => {
-  configureFloatWindows({ hiddenClass: "hidden" });
+  configureFloatingWindows({ hiddenClass: "hidden" });
   try {
     const el = node("div", { w: 100, h: 100 }); el.classList.add("hidden");
     const h = registerFloatingWindow(el, { id: "t-class" });
     eq(h.isOpen(), false); h.open(); eq(el.classList.contains("hidden"), false); eq(el.hidden, false); eq(h.isOpen(), true);
     h.close(); eq(el.classList.contains("hidden"), true); eq(el.hidden, false, "属性一直没碰");
     h.dispose();
-  } finally { configureFloatWindows({ hiddenClass: null }); }
+  } finally { configureFloatingWindows({ hiddenClass: null }); }
 }));
 
 test("[float-window] z 序：开 = 置顶；raise 换到最上；内联 z-index = 底数 + 栈位", () => withEnv({}, () => {
@@ -130,11 +130,12 @@ test("[float-window] 壳 · 左上圆钮：动不到 4 px = 点 = 收起 / 恢�
   const el = node("div", { w: 300, h: 200 }); el.hidden = true; el.style.width = "320px"; el.style.height = "240px";
   const col = [], moves = [];
   const h = registerFloatingWindow(el, { id: "t-knob", onMove: (p) => moves.push(p), resize: { grip: null, min: { w: 100, h: 80 } },
-    shell: { knob: { iconHtml: "<svg></svg>", label: "小窗", hint: "点一下收起，按住拖" }, collapsible: { onCollapse: (c) => col.push(c) } } });
+    shell: { knob: { icon: "checkerboard", label: "小窗", hint: "点一下收起，按住拖" }, collapsible: { onCollapse: (c) => col.push(c) } } });
   h.open(); h.restore({ left: 100, top: 100 });
   const knob = el.find("wbe-float-knob");
   assert(knob && el.classList.contains("wbe-float-shell"), "有壳、有圆钮");
   eq(knob.title, "点一下收起，按住拖"); eq(knob.getAttribute("aria-label"), "小窗");
+  assert(knob.children[0].innerHTML.includes('<use href="#checkerboard"/>'), "图标 = 库用 sprite 的名字画");
   knob.fire("pointerdown", { clientX: 10, clientY: 10 }); knob.fire("pointermove", { clientX: 13, clientY: 10 }); knob.fire("pointerup", { clientX: 13, clientY: 10 });
   eq(h.collapsed(), true, "3 px = 点 = 收起"); assert(el.classList.contains("wbe-float-collapsed")); eq(el.style.left, "100px", "点不挪窗"); eq(moves.length, 0);
   eq(el.offsetWidth, 44, "收成 44 px");
@@ -152,11 +153,11 @@ test("[float-window] 壳 · 左上圆钮：动不到 4 px = 点 = 收起 / 恢�
 
 test("[float-window] 壳 · 一开始就收着；没给 collapsible 的圆钮点了不收", () => withEnv({}, () => {
   const el = node("div", { w: 300, h: 200 });
-  const h = registerFloatingWindow(el, { id: "t-pre", shell: { knob: { iconHtml: "", label: "x" }, collapsible: { collapsed: true } } });
+  const h = registerFloatingWindow(el, { id: "t-pre", shell: { knob: { icon: "x", label: "x" }, collapsible: { collapsed: true } } });
   eq(h.collapsed(), true); assert(el.classList.contains("wbe-float-collapsed"));
   h.dispose();
   const el2 = node("div", { w: 300, h: 200 });
-  const h2 = registerFloatingWindow(el2, { id: "t-nocol", shell: { knob: { iconHtml: "", label: "x" } } });
+  const h2 = registerFloatingWindow(el2, { id: "t-nocol", shell: { knob: { icon: "x", label: "x" } } });
   const k = el2.find("wbe-float-knob"); k.fire("pointerdown"); k.fire("pointerup");
   eq(h2.collapsed(), false);
   h2.dispose();
@@ -165,7 +166,7 @@ test("[float-window] 壳 · 一开始就收着；没给 collapsible 的圆钮点
 test("[float-window] 壳 · 斜纹角：库建它、拖它改大小（钳最小值）、回声", () => withEnv({}, () => {
   const el = node("div", { w: 300, h: 200 }); el.hidden = true;
   const sizes = [];
-  const h = registerFloatingWindow(el, { id: "t-grip", resize: { grip: null, min: { w: 120, h: 90 }, onResize: (s) => sizes.push(s) }, shell: { grip: true } });
+  const h = registerFloatingWindow(el, { id: "t-grip", resize: { grip: null, min: { w: 120, h: 90 }, onResize: (s) => sizes.push(s) }, shell: { corner: true } });
   h.open(); h.restore({ left: 0, top: 50 });
   const grip = el.find("wbe-float-grip");
   assert(grip && grip.classList.contains("wbe-float-part"), "库建了斜纹角，它跟着淡");
@@ -174,16 +175,34 @@ test("[float-window] 壳 · 斜纹角：库建它、拖它改大小（钳最小�
   grip.fire("pointerdown", { clientX: 0, clientY: 0 }); grip.fire("pointermove", { clientX: -9999, clientY: -9999 }); grip.fire("pointerup");
   eq(el.style.width, "120px", "不小于最小值"); eq(el.style.height, "90px");
   h.dispose();
+}));
+
+test("[float-window] 壳 · 组合不对就抛，不悄悄挑一个：斜纹角没给 resize / 斜纹角和 resize.grip 都给 / 能收起却没有圆钮", () => withEnv({}, () => {
+  const throws = (spec, re, what) => { const before = floatingWindowStack().length; let msg = ""; try { registerFloatingWindow(node("div", { w: 10, h: 10 }), spec); } catch (e) { msg = String(e?.message ?? e); } assert(re.test(msg), `${what}：应当抛，实得「${msg}」`); eq(floatingWindowStack().length, before, `${what}：抛了不进栈`); };
+  throws({ id: "t-bad1", shell: { corner: true } }, /corner needs spec\.resize/, "斜纹角没给 resize");
+  throws({ id: "t-bad2", resize: { grip: node("div"), min: { w: 10, h: 10 } }, shell: { corner: true } }, /not both/, "两个把手");
+  throws({ id: "t-bad3", shell: { collapsible: {} } }, /needs shell\.knob/, "能收起没有圆钮");
+}));
+
+test("[float-window] 壳 · 收着时那颗小图标的读屏名 / 提示由宿主给；不给就用圆钮的", () => withEnv({}, () => {
+  const el = node("div", { w: 300, h: 200 });
+  const h = registerFloatingWindow(el, { id: "t-restore", shell: { knob: { icon: "x", label: "画布", hint: "点一下收起" }, collapsible: { restoreLabel: "打开画布", restoreHint: "点一下展开" } } });
+  const k = el.find("wbe-float-knob");
+  eq(k.getAttribute("aria-label"), "画布"); eq(k.title, "点一下收起");
+  h.setCollapsed(true); eq(k.getAttribute("aria-label"), "打开画布"); eq(k.title, "点一下展开");
+  h.setCollapsed(false); eq(k.getAttribute("aria-label"), "画布"); eq(k.title, "点一下收起");
+  h.dispose();
   const el2 = node("div", { w: 300, h: 200 });
-  const h2 = registerFloatingWindow(el2, { id: "t-nogrip", shell: { grip: true } });
-  eq(el2.find("wbe-float-grip"), null, "没给 resize 就不建角");
+  const h2 = registerFloatingWindow(el2, { id: "t-restore2", shell: { knob: { icon: "x", label: "画布" }, collapsible: { collapsed: true } } });
+  const k2 = el2.find("wbe-float-knob");
+  eq(k2.getAttribute("aria-label"), "画布", "不给 restoreLabel = 圆钮的"); eq(k2.title, "画布", "没有提示 = 读屏名");
   h2.dispose();
 }));
 
 test("[float-window] 壳 · 闲置淡出：2.5 秒不动 → idle；一动就醒；能悬停的设备上离窗全隐、进窗即现；拖着时不淡", () => withEnv({ fakeTimers: true, hover: true }, ({ fire, timers }) => {
   eq(SHELL_IDLE_MS, 2500);
   const el = node("div", { w: 300, h: 200 }); el.hidden = true;
-  const h = registerFloatingWindow(el, { id: "t-fade", shell: { knob: { iconHtml: "", label: "x" }, fade: true } });
+  const h = registerFloatingWindow(el, { id: "t-fade", shell: { knob: { icon: "x", label: "x" }, fade: true } });
   h.open();
   eq(fire().join(","), "2500"); assert(el.classList.contains("wbe-float-idle"), "到点淡");
   el.fire("pointermove"); assert(!el.classList.contains("wbe-float-idle"), "一动就醒");
@@ -200,7 +219,7 @@ test("[float-window] 壳 · 闲置淡出：2.5 秒不动 → idle；一动就醒
 
 test("[float-window] 壳 · 不开 fade = 没有计时器、不加淡出类", () => withEnv({ fakeTimers: true, hover: true }, ({ timers }) => {
   const el = node("div", { w: 300, h: 200 }); el.hidden = true;
-  const h = registerFloatingWindow(el, { id: "t-nofade", shell: { knob: { iconHtml: "", label: "x" } } });
+  const h = registerFloatingWindow(el, { id: "t-nofade", shell: { knob: { icon: "x", label: "x" } } });
   h.open(); eq(timers.size, 0);
   el.fire("pointerleave"); assert(!el.classList.contains("wbe-float-away"));
   h.dispose();
@@ -208,7 +227,7 @@ test("[float-window] 壳 · 不开 fade = 没有计时器、不加淡出类", ()
 
 test("[float-window] dispose 把挂过的监听全摘干净（窗、圆钮、斜纹角）", () => withEnv({ hover: true }, () => {
   const el = node("div", { w: 300, h: 200 });
-  const h = registerFloatingWindow(el, { id: "t-dispose", resize: { grip: null, min: { w: 10, h: 10 } }, shell: { knob: { iconHtml: "", label: "x" }, collapsible: {}, grip: true, fade: true } });
+  const h = registerFloatingWindow(el, { id: "t-dispose", resize: { grip: null, min: { w: 10, h: 10 } }, shell: { knob: { icon: "x", label: "x" }, collapsible: {}, corner: true, fade: true } });
   const knob = el.find("wbe-float-knob"), grip = el.find("wbe-float-grip");
   assert(el.listenerCount() > 0 && knob.listenerCount() > 0 && grip.listenerCount() > 0);
   h.dispose();

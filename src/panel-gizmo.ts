@@ -2,7 +2,13 @@
 // 从 WeebPaint src/ui/panel-gizmo.ts 原样搬来（created 2026-09-02 by Claude Fable 5.1，WeebPaint UI 纪元 C2）；CatsUp 搬入 2026-10-30 by Claude Opus 5.5
 // （user 10-29「浮窗的时候你可以学一下weebpaint……尽量深模块窄接口地去做」）。几何 = 纯函数 clampPanelPos / clampSize；落地（写 style / 记位置）归调用方。
 
-export interface PanelPos { left: number; top: number }
+/** 浮窗左上角在视口里的位置（CSS px）。 */
+export interface PanelPos {
+  /** 离视口左边。 */
+  left: number;
+  /** 离视口上边。 */
+  top: number;
+}
 export interface Viewport { w: number; h: number }
 
 /** 视口钳制（纯函数）：左右 0..vw-w；上下 topFloor..vh-h（窗比视口还大时取靠上/靠左那端）。 */
