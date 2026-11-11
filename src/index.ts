@@ -1,5 +1,6 @@
 // @internal/workbench-elements 门牌——出生 2026-09-09（Claude Fable 5.1；CatsUp 总账 A5，user 2026-09-06「也是近期要做的」）。
 // 四个原子 = WeebPaint src/ui/{popup-menu,notice,icon}.ts + src/anchored-popup.ts 的 WET 拷贝，签名以 WeebPaint api/ 为准，不改语义。
+// 0.2.0（2026-11-11，Claude Opus 5.5；CatsUp 施工单十七 / 家族周账 F-253）加第五件：浮窗的壳 float-window（WeebPaint → CatsUp 的 floating-window + panel-gizmo 搬进来，加可选的壳零件）。
 // 宿主布局知识（顶栏下缘 / 浮窗顶地板）经 configureFloors 注入；sprite 归宿主，包只拼 <use>；CSS 见 src/workbench-elements.css，token 由宿主 :root 提供。
 export { configureFloors, floors, safeAreaTop, type HostFloors } from "./host-floors.ts";
 export { topToolbarBottom, positionPopup } from "./anchored-popup.ts";
@@ -13,3 +14,8 @@ export {
   relayoutNotices, showNotice, closeNotice, noticeCount, isNoticeOpen,
   type NoticeLevel, type NoticeAction, type NoticeOpts, type NoticeHandle,
 } from "./notice.ts";
+export {
+  configureFloatWindows, registerFloatingWindow, floatingTopFloor, computeTopFloor, clampAllFloatingWindows,
+  raiseFloatingWindow, suppressFloatingForTransient, restoreFloatingAfterTransient, floatingWindowStack,
+  type FloatWindowsConfig, type FloatingWindowSpec, type FloatingWindowHandle, type FloatShell, type PanelPos,
+} from "./float-window.ts";

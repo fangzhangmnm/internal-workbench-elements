@@ -59,8 +59,8 @@ export function floatingTopFloor(): number {
 
 /** 四样可选的壳零件（全不开 = 没有壳）。 */
 export interface FloatShell {
-  /** 左上圆钮：图标的 HTML（宿主拼好，比如 iconHtml("...")）和读屏名。点一下 = 收起 / 恢复（collapsible 开着时）；按住动过 SHELL_KNOB_DRAG_PX = 挪窗。 */
-  knob?: { iconHtml: string; label: string };
+  /** 左上圆钮：图标的 HTML（宿主拼好，比如 iconHtml("...")）、读屏名、悬停提示（缺省 = 读屏名）。点一下 = 收起 / 恢复（collapsible 开着时）；按住动过 SHELL_KNOB_DRAG_PX = 挪窗。 */
+  knob?: { iconHtml: string; label: string; hint?: string };
   /** 能收成小图标（要 knob）：44 px 圆钮、同一个图标、同一个位置；拖 = 挪，点 = 恢复；原来的宽高留着。collapsed = 一开始收没收着；onCollapse = 变了告诉宿主。 */
   collapsible?: { collapsed?: boolean; onCollapse?: (collapsed: boolean) => void };
   /** 右下斜纹角（19 px，触屏能拖）：库建这个元素当改大小的把手（要给 spec.resize，resize.grip 可以是 null）。 */
@@ -202,7 +202,7 @@ export function registerFloatingWindow(el: HTMLElement, spec: FloatingWindowSpec
     el.classList.add("wbe-float-shell");
     if (shell.grip && spec.resize && !gripEl) { gripEl = document.createElement("div"); gripEl.className = "wbe-float-grip wbe-float-part"; gripEl.setAttribute("aria-hidden", "true"); el.appendChild(gripEl); }
     if (shell.knob) {
-      const knob = document.createElement("button"); knob.type = "button"; knob.className = "wbe-float-knob"; knob.title = shell.knob.label; knob.setAttribute("aria-label", shell.knob.label);
+      const knob = document.createElement("button"); knob.type = "button"; knob.className = "wbe-float-knob"; knob.title = shell.knob.hint ?? shell.knob.label; knob.setAttribute("aria-label", shell.knob.label);
       const dot = document.createElement("span"); dot.className = "wbe-float-dot"; dot.innerHTML = shell.knob.iconHtml; knob.appendChild(dot);
       el.appendChild(knob);
       let d: { id: number; sx: number; sy: number; ol: number; ot: number; moved: boolean } | null = null;
