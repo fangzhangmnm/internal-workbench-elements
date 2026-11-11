@@ -10,6 +10,9 @@ export interface AdoptedPopupOpts extends PopupAnchorOpts {
     position?: "anchor" | "css";
 }
 
+// @public
+export function clampAllFloatingWindows(): void;
+
 // @public (undocumented)
 export const closeAllPopupMenus: typeof closePopupMenu;
 
@@ -22,11 +25,113 @@ export function closePopupMenu(): void;
 // @public
 export function closePopupMenuOf(el: HTMLElement | null): void;
 
+// @public
+export function computeTopFloor(safeTop: number, hudBottom: number | null): number;
+
+// @public (undocumented)
+export function configureFloatWindows(c: FloatWindowsConfig): void;
+
 // @public (undocumented)
 export function configureFloors(f: Partial<HostFloors>): void;
 
 // @public
 export function currentPopupMenu(): PopupMenuHandle | null;
+
+// @public
+export function floatingTopFloor(): number;
+
+// @public (undocumented)
+export interface FloatingWindowHandle {
+    clamp(): void;
+    // (undocumented)
+    close(): void;
+    collapsed(): boolean;
+    // (undocumented)
+    dispose(): void;
+    // (undocumented)
+    readonly el: HTMLElement;
+    // (undocumented)
+    readonly id: string;
+    // (undocumented)
+    isOpen(): boolean;
+    // (undocumented)
+    open(): void;
+    // (undocumented)
+    raise(): void;
+    restore(pos: (PanelPos & {
+        width?: number;
+        height?: number;
+    }) | null): void;
+    setCollapsed(on: boolean): void;
+    // (undocumented)
+    toggle(force?: boolean): boolean;
+}
+
+// @public (undocumented)
+export interface FloatingWindowSpec {
+    bottomFloor?: () => number;
+    fallbackSize?: {
+        w: number;
+        h: number;
+    };
+    head?: HTMLElement | null;
+    // (undocumented)
+    id: string;
+    ignoreDragOn?: (target: Element) => boolean;
+    onMove?: (pos: PanelPos) => void;
+    onOpenChange?: (open: boolean) => void;
+    onViewport?: (floor: number) => void;
+    // (undocumented)
+    resize?: {
+        grip: HTMLElement | null;
+        min: {
+            w: number;
+            h: number;
+        };
+        axis?: "both" | "x";
+        getSize?: () => {
+            w: number;
+            h: number;
+        };
+        apply?: (size: {
+            w: number;
+            h: number;
+        }) => void;
+        onResize?: (size: {
+            w: number;
+            h: number;
+        }) => void;
+    };
+    shell?: FloatShell;
+    transient?: {
+        keepDuring: string[];
+    };
+}
+
+// @public
+export function floatingWindowStack(): string[];
+
+// @public
+export interface FloatShell {
+    collapsible?: {
+        collapsed?: boolean;
+        onCollapse?: (collapsed: boolean) => void;
+    };
+    fade?: boolean;
+    grip?: boolean;
+    knob?: {
+        iconHtml: string;
+        label: string;
+        hint?: string;
+    };
+}
+
+// @public
+export interface FloatWindowsConfig {
+    hiddenClass?: string | null;
+    hudBottom?: () => number | null;
+    zBase?: number;
+}
 
 // @public (undocumented)
 export const floors: Readonly<HostFloors>;
@@ -112,6 +217,14 @@ export function openAdoptedPopup(el: HTMLElement, opts: AdoptedPopupOpts): Popup
 // @public (undocumented)
 export function openPopupMenu<Id extends string>(opts: PopupMenuOpts<Id>): PopupMenuHandle;
 
+// @public (undocumented)
+export interface PanelPos {
+    // (undocumented)
+    left: number;
+    // (undocumented)
+    top: number;
+}
+
 // @public
 export interface PopupAnchorOpts {
     // (undocumented)
@@ -188,14 +301,26 @@ export type PopupVariant = "list" | "compact";
 // @public (undocumented)
 export function positionPopup(popupEl: HTMLElement | null, opts?: PositionOpts): void;
 
+// @public (undocumented)
+export function raiseFloatingWindow(el: HTMLElement | null): void;
+
+// @public (undocumented)
+export function registerFloatingWindow(el: HTMLElement, spec: FloatingWindowSpec): FloatingWindowHandle;
+
 // @public
 export function relayoutNotices(): void;
+
+// @public (undocumented)
+export function restoreFloatingAfterTransient(): void;
 
 // @public (undocumented)
 export function safeAreaTop(): number;
 
 // @public (undocumented)
 export function showNotice(opts: NoticeOpts): NoticeHandle;
+
+// @public (undocumented)
+export function suppressFloatingForTransient(mode: string): void;
 
 // @public (undocumented)
 export function toggleAdoptedPopup(el: HTMLElement, opts: AdoptedPopupOpts): PopupMenuHandle | null;
